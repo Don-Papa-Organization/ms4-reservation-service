@@ -1,8 +1,6 @@
 import express, { Express, Request, Response, NextFunction} from "express";
-import productRoutes from "./routes/productRoutes";
-import employerRoutes from "./routes/employerRoutes";
-import userRoutes from "./routes/userRoutes";
-import promotionRoutes from "./routes/promotionRoutes";
+import tableRoutes from "./routes/reservationRoutes";
+import mesaRoutes from "./routes/mesaRoutes";
 
 const app: Express = express();
 
@@ -21,9 +19,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-app.use("/api/products", productRoutes);
-app.use("/api/employers", employerRoutes)
-app.use("/api/users", userRoutes);
-app.use("/api/promotions", promotionRoutes);
+app.use("/api/reservations", tableRoutes);
+app.use("/api/table", mesaRoutes);
 
 export default app;

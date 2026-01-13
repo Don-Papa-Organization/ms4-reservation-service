@@ -7,6 +7,8 @@ import {
     AutoIncrement
 } from "sequelize-typescript";
 
+
+
 @Table({ tableName: "mesa", timestamps: false })
 export class Mesa extends Model {
     @PrimaryKey
@@ -27,7 +29,7 @@ export class Mesa extends Model {
     numero!: number;
 
     @Column({
-        type: DataType.ENUM('Disponible', 'Reservada', 'Ocupada','Fuerda de servicio'),
+        type: DataType.ENUM('Disponible', 'Reservada', 'Ocupada', 'Fuera de servicio'),
         allowNull: false
     })
     estado!: string;

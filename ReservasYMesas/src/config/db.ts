@@ -4,10 +4,10 @@ import { Sequelize } from "sequelize-typescript";
 //Importacion de modelos
 import {
   Mesa, Reserva
-} from "../models"
+} from "../domain/models"
 
 //Importar credenciales
-const DB_HOST = process.env.DB_HOST || "mysql"; 
+const DB_HOST = process.env.DB_HOST || "reservation-mysql"; 
 const DB_USER = process.env.DB_USER || "root";
 const DB_PASSWORD = process.env.DB_PASSWORD || "MiContraseñaSegura123!";
 const DB_NAME = process.env.DB_NAME || "don_papa";
