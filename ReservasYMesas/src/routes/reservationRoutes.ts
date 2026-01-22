@@ -15,7 +15,7 @@ router.post("/reserve", authenticateToken, requireUsuarioActivo, requireRoles(Ti
 router.get("/history", authenticateToken, requireUsuarioActivo, requireRoles(TipoUsuario.cliente), getReservationHistory);
 
 // Ruta protegida: visualizar reservas del día (requiere autenticación y rol administrador)
-router.get("/daily", authenticateToken, requireUsuarioActivo, requireRoles(TipoUsuario.administrador), getDailyReservations);
+router.get("/daily", authenticateToken, requireUsuarioActivo, requireRoles(TipoUsuario.administrador, TipoUsuario.empleado), getDailyReservations);
 
 // CU44: Rutas para empleados y administradores
 

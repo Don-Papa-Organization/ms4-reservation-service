@@ -98,6 +98,7 @@ export const getDailyReservations = async (req: Request, res: Response) => {
 		if (fecha && !/^\d{4}-\d{2}-\d{2}$/.test(fecha as string)) {
 			return res.status(400).json({ message: "fecha debe estar en formato YYYY-MM-DD." });
 		}
+		
 
 		const result = await tableService.getDailyReservations(fecha as string | undefined);
 
