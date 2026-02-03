@@ -5,10 +5,10 @@ import { Reserva } from "../domain/models";
 import { extractToken } from "../middlewares/authMiddleware";
 import { MesaService } from "./mesaService";
 import { Mesa } from "../domain/models";
-import { MesaDto } from "../domain/dtos/mesaDto";
+import { MesaResponseDto } from "../domain/dtos/response/Mesa.Response.dto";
 import { ClientService } from "./apis/clientService";
 import { Op } from "sequelize";
-import { ReservaDto } from "../domain/dtos/reservaDto";
+import { ReservaResponseDto } from "../domain/dtos/response/Reserva.Response.dto";
 
 type ReservePayload = {
 	idMesa: number;
@@ -29,25 +29,25 @@ export class TableService {
 	private reservaRepository = new ReservaRepository();
 	private clientService = new ClientService();
 
-	private toDtoReserva(reserva: Reserva): ReservaDto {
+	private toDtoReserva(reserva: Reserva): ReservaResponseDto {
 		return {
 			idReserva: reserva.idReserva,
 			estado: reserva.estado as "pendiente" | "confirmada" | "cancelada",
-			fechaReserva: reserva.fechaReserva,
+			fechaReserva: reserva.fechaReserva.toISOString(),
 			idMesa: reserva.idMesa,
 			idCliente: reserva.idCliente,
 			cantidadPersonas: reserva.cantidadPersonas,
 		};
 	}
 
-	private toDtoMesa(mesa: Mesa): MesaDto {
-			return {
-				idMesa: mesa.idMesa,
-				numero: mesa.numero,
-				tipo: mesa.tipo as "VIP" | "Regular",
-				estado: mesa.estado as "Disponible" | "Reservada" | "Ocupada" | "Fuera de servicio",
-			}
-		}
+	private toDtoMesa(mesa: Mesa): MesaResponseDto {
+		return {
+			idMesa: mesa.idMesa,
+			numero: mesa.numero,
+			tipo: mesa.tipo as "VIP" | "Regular",
+			estado: mesa.estado as "Disponible" | "Reservada" | "Ocupada" | "Fuera de servicio",
+		};
+	}
 
 	/**
 	 * Crea una reserva para la mesa e indica el cliente asociado (id en el token).
@@ -121,7 +121,7 @@ export class TableService {
 			const todasLasMesas = await this.mesaRepository.findAll();
 
 			// Filtrar mesas disponibles
-			const mesasDisponibles: MesaDto[] = todasLasMesas
+			const mesasDisponibles: MesaResponseDto[] = todasLasMesas
 				.filter(mesa => {
 					// No está reservada o ocupada en ese horario
 					if (mesasReservadas.has(mesa.idMesa)) return false;

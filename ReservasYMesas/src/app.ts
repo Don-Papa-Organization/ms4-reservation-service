@@ -1,6 +1,7 @@
 import express, { Express, Request, Response, NextFunction} from "express";
 import tableRoutes from "./routes/reservationRoutes";
 import mesaRoutes from "./routes/mesaRoutes";
+import { errorMiddleware } from "./middlewares/error.middleware";
 
 const app: Express = express();
 
@@ -21,5 +22,8 @@ app.get('/health', (req, res) => {
 
 app.use("/api/reservations", tableRoutes);
 app.use("/api/table", mesaRoutes);
+
+// Middleware de manejo de errores - DEBE IR AL FINAL
+app.use(errorMiddleware);
 
 export default app;

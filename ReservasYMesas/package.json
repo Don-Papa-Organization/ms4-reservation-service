@@ -16,6 +16,7 @@
     "bcrypt": "^6.0.0",
     "dotenv": "^16.6.0",
     "express": "^5.1.0",
+    "express-async-handler": "^1.2.0",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.16.0",
     "sequelize-typescript": "^2.1.6"

@@ -1,18 +1,20 @@
 import { MesaRepository } from "../domain/repositories/mesaRepository";
-import { MesaDto } from "../domain/dtos/mesaDto";
 import { Mesa } from "../domain/models";
+import { MesaResponseDto } from "../domain/dtos/response/Mesa.Response.dto";
+import { CreateMesaRequestDto } from "../domain/dtos/request/CreateMesa.Request.dto";
+import { UpdateMesaRequestDto } from "../domain/dtos/request/UpdateMesa.Request.dto";
 
 export class MesaService {
 	private mesaRepository = new MesaRepository();
 	private readonly allowedEstados = ["Disponible", "Reservada", "Ocupada", "Fuera de servicio"];
 
-	private toDto(mesa: Mesa): MesaDto {
+	private toDto(mesa: Mesa): MesaResponseDto {
 		return {
 			idMesa: mesa.idMesa,
 			numero: mesa.numero,
 			tipo: mesa.tipo as "VIP" | "Regular",
 			estado: mesa.estado as "Disponible" | "Reservada" | "Ocupada" | "Fuera de servicio",
-		}
+		};
 	}
 
 	/**
@@ -79,13 +81,13 @@ export class MesaService {
 	/**
 	 * Crea una nueva mesa.
 	 */
-	async createMesa(data: MesaDto) {
+	async createMesa(data: CreateMesaRequestDto) {
 		try {
 			// Validar datos requeridos
-			if (!data.numero || !data.tipo || !data.estado) {
+			if (!data.numero || !data.tipo) {
 				return {
 					status: 400,
-					message: "numero, tipo y estado son campos obligatorios.",
+					message: "numero y tipo son campos obligatorios.",
 				};
 			}
 
@@ -97,18 +99,10 @@ export class MesaService {
 				};
 			}
 
-			// Validar que estado sea válido
-			if (!this.allowedEstados.includes(data.estado)) {
-				return {
-					status: 400,
-					message: "estado debe ser 'Disponible', 'Reservada', 'Ocupada' o 'Fuera de servicio'.",
-				};
-			}
-
 			const nuevaMesa = await this.mesaRepository.create({
 				numero: data.numero,
 				tipo: data.tipo,
-				estado: data.estado,
+				estado: "Disponible",
 			});
 
 			return {
@@ -127,7 +121,7 @@ export class MesaService {
 	/**
 	 * Actualiza una mesa existente.
 	 */
-	async updateMesa(idMesa: number, data: Partial<MesaDto>) {
+	async updateMesa(idMesa: number, data: UpdateMesaRequestDto) {
 		try {
 			// Validar que la mesa existe
 			const mesaExistente = await this.mesaRepository.findById(idMesa);
