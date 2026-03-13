@@ -12,7 +12,7 @@ export class MesaService {
 		return {
 			idMesa: mesa.idMesa,
 			numero: mesa.numero,
-			tipo: mesa.tipo as "VIP" | "Regular",
+			tipo: mesa.tipo as "VIP" | "Barra" | "Salon",
 			estado: mesa.estado as "Disponible" | "Reservada" | "Ocupada" | "Fuera de servicio",
 		};
 	}
@@ -92,10 +92,10 @@ export class MesaService {
 			}
 
 			// Validar que tipo sea válido
-			if (!["VIP", "Regular"].includes(data.tipo)) {
+			if (!["VIP", "Barra", "Salon"].includes(data.tipo)) {
 				return {
 					status: 400,
-					message: "tipo debe ser 'VIP' o 'Regular'.",
+					message: "tipo debe ser 'VIP', 'Barra' o 'Salon'.",
 				};
 			}
 
@@ -133,10 +133,10 @@ export class MesaService {
 			}
 
 			// Validar que tipo sea válido si se proporciona
-			if (data.tipo && !["VIP", "Regular"].includes(data.tipo)) {
+			if (data.tipo && !["VIP", "Barra", "Salon"].includes(data.tipo)) {
 				return {
 					status: 400,
-					message: "tipo debe ser 'VIP' o 'Regular'.",
+					message: "tipo debe ser 'VIP', 'Barra' o 'Salon'.",
 				};
 			}
 

@@ -44,7 +44,7 @@ export class TableService {
 		return {
 			idMesa: mesa.idMesa,
 			numero: mesa.numero,
-			tipo: mesa.tipo as "VIP" | "Regular",
+			tipo: mesa.tipo as "VIP" | "Barra" | "Salon",
 			estado: mesa.estado as "Disponible" | "Reservada" | "Ocupada" | "Fuera de servicio",
 		};
 	}

@@ -17,7 +17,7 @@ export class Mesa extends Model {
     idMesa!: number;
 
     @Column({
-        type: DataType.ENUM('VIP', 'Regular'),
+        type: DataType.ENUM('VIP', 'Barra', "Salon"),
         allowNull: false
     })
     tipo!: string;
