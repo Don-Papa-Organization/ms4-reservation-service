@@ -2,6 +2,7 @@ import { Router } from "express";
 import asyncHandler from "express-async-handler";
 import {
 	getAllMesas,
+	getMesaTipos,
 	getMesaById,
 	createMesa,
 	updateMesa,
@@ -16,6 +17,9 @@ const router = Router();
 
 // GET todas las mesas (público)
 router.get("/", asyncHandler(getAllMesas));
+
+// GET tipos de mesa permitidos (público)
+router.get("/tipos", asyncHandler(getMesaTipos));
 
 // GET mesa por ID (público)
 router.get("/:idMesa", asyncHandler(getMesaById));

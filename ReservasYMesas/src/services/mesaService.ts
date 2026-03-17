@@ -7,14 +7,19 @@ import { UpdateMesaRequestDto } from "../domain/dtos/request/UpdateMesa.Request.
 export class MesaService {
 	private mesaRepository = new MesaRepository();
 	private readonly allowedEstados = ["Disponible", "Reservada", "Ocupada", "Fuera de servicio"];
+	private readonly allowedTipos = ["VIP", "Barra", "Salon", "Varios"] as const;
 
 	private toDto(mesa: Mesa): MesaResponseDto {
 		return {
 			idMesa: mesa.idMesa,
 			numero: mesa.numero,
-			tipo: mesa.tipo as "VIP" | "Barra" | "Salon",
+			tipo: mesa.tipo as "VIP" | "Barra" | "Salon" | "Varios",
 			estado: mesa.estado as "Disponible" | "Reservada" | "Ocupada" | "Fuera de servicio",
 		};
+	}
+
+	getAllowedTipos(): readonly string[] {
+		return this.allowedTipos;
 	}
 
 	/**
@@ -92,10 +97,10 @@ export class MesaService {
 			}
 
 			// Validar que tipo sea válido
-			if (!["VIP", "Barra", "Salon"].includes(data.tipo)) {
+			if (!this.allowedTipos.includes(data.tipo as any)) {
 				return {
 					status: 400,
-					message: "tipo debe ser 'VIP', 'Barra' o 'Salon'.",
+					message: "tipo debe ser 'VIP', 'Barra', 'Salon' o 'Varios'.",
 				};
 			}
 
@@ -133,10 +138,10 @@ export class MesaService {
 			}
 
 			// Validar que tipo sea válido si se proporciona
-			if (data.tipo && !["VIP", "Barra", "Salon"].includes(data.tipo)) {
+			if (data.tipo && !this.allowedTipos.includes(data.tipo as any)) {
 				return {
 					status: 400,
-					message: "tipo debe ser 'VIP', 'Barra' o 'Salon'.",
+					message: "tipo debe ser 'VIP', 'Barra', 'Salon' o 'Varios'.",
 				};
 			}
 

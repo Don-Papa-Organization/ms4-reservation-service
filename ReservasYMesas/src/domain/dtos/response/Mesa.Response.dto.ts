@@ -3,7 +3,7 @@
  */
 export class MesaResponseDto {
   idMesa!: number;
-  tipo!: 'VIP' | 'Barra' | "Salon";
+  tipo!: 'VIP' | 'Barra' | "Salon" | "Varios";
   numero!: number;
   estado!: 'Disponible' | 'Reservada' | 'Ocupada' | 'Fuera de servicio';
   createdAt?: string;

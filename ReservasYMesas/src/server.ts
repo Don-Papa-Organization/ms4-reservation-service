@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import app from "./app";
+import { runMesaSeed } from "./config/seedData";
 
 
 const PORT = process.env.PORT || 4004;
@@ -15,6 +16,9 @@ async function startServer() {
       await sequelize.sync({ alter: true });
       console.log("✅ Modelos sincronizados con la base de datos");
     }
+
+    await runMesaSeed();
+    console.log("✅ Verificacion de seed de mesas completada");
   } catch (err) {
     console.error("❌ Error inicializando la base de datos:", err);
   }

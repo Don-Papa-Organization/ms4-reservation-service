@@ -24,6 +24,22 @@ export const getAllMesas = async (req: Request, res: Response, next: NextFunctio
 };
 
 /**
+ * GET /api/mesas/tipos - Obtiene tipos de mesa permitidos
+ */
+export const getMesaTipos = async (req: Request, res: Response, next: NextFunction) => {
+	const response: ApiResponse<{ tipos: readonly string[] }> = {
+		success: true,
+		data: {
+			tipos: mesaService.getAllowedTipos(),
+		},
+		message: "Tipos de mesa obtenidos correctamente",
+		timestamp: new Date().toISOString()
+	};
+
+	res.status(200).json(response);
+};
+
+/**
  * GET /api/mesas/:idMesa - Obtiene una mesa por ID
  */
 export const getMesaById = async (req: Request, res: Response, next: NextFunction) => {
