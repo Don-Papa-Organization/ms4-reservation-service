@@ -9,11 +9,16 @@ import { MesaResponseDto } from "../domain/dtos/response/Mesa.Response.dto";
 import { ClientService } from "./apis/clientService";
 import { Op } from "sequelize";
 import { ReservaResponseDto } from "../domain/dtos/response/Reserva.Response.dto";
+import { TipoUsuario } from "../types/express";
 
 type ReservePayload = {
 	idMesa: number;
 	fechaReserva: string;
 	cantidadPersonas: number;
+};
+
+type ReserveByStaffPayload = ReservePayload & {
+	idCliente?: number;
 };
 
 type AvailabilityQuery = {
@@ -49,6 +54,19 @@ export class TableService {
 		};
 	}
 
+	private validarFechaReserva(fechaReserva: string): { esValida: boolean; fecha?: Date; mensaje?: string } {
+		const fecha = new Date(fechaReserva);
+		if (Number.isNaN(fecha.getTime())) {
+			return { esValida: false, mensaje: "La fecha de reserva es inválida." };
+		}
+
+		if (fecha.getTime() < Date.now()) {
+			return { esValida: false, mensaje: "No puedes realizar una reserva con una hora menor a la actual." };
+		}
+
+		return { esValida: true, fecha };
+	}
+
 	/**
 	 * Crea una reserva para la mesa e indica el cliente asociado (id en el token).
 	 */
@@ -59,15 +77,9 @@ export class TableService {
 			return { status: 401, message: "No se pudo identificar al usuario autenticado." };
 		}
 
-		const token = extractToken(req);
-		if (!token) {
-			return { status: 401, message: "No se proporcionó access token." };
-		}
-
-		// Validar cliente en microservicio de usuarios
-		const client = await this.clientService.getClientById(req.user.id, token);
-		if (!client) {
-			return { status: 404, message: "El usuario no existe como cliente. Regístrese para poder reservar." };
+		const validacionFecha = this.validarFechaReserva(fechaReserva);
+		if (!validacionFecha.esValida) {
+			return { status: 400, message: validacionFecha.mensaje };
 		}
 
 		// Validar mesa
@@ -82,9 +94,62 @@ export class TableService {
 		// Crear reserva
 		const nuevaReserva = await this.reservaRepository.create({
 			estado: "confirmada",
-			fechaReserva: new Date(fechaReserva),
+			fechaReserva: validacionFecha.fecha!,
 			idMesa,
 			idCliente: req.user.id,
+			cantidadPersonas,
+		});
+
+		await this.mesaService.updateTableStatusInternal(idMesa, "Reservada");
+
+		return { status: 201, data: this.toDtoReserva(nuevaReserva) };
+	}
+
+	/**
+	 * Crea una reserva desde staff (administrador/empleado) indicando cliente explícito.
+	 */
+	async reserveTableByStaff(payload: ReserveByStaffPayload, req: Request) {
+		const { idMesa, fechaReserva, cantidadPersonas, idCliente } = payload;
+
+		const token = extractToken(req);
+		if (!token) {
+			return { status: 401, message: "No se proporcionó access token." };
+		}
+
+		const idClienteEsValido = Number.isFinite(idCliente) && (idCliente as number) > 0;
+		const idClienteFinal = idClienteEsValido
+			? (idCliente as number)
+			: (Number.isFinite(req.user?.id) && (req.user!.id as number) > 0 ? req.user!.id : null);
+
+		if (!idClienteFinal) {
+			return { status: 401, message: "No se pudo identificar el usuario para registrar la reserva." };
+		}
+
+		const validacionFecha = this.validarFechaReserva(fechaReserva);
+		if (!validacionFecha.esValida) {
+			return { status: 400, message: validacionFecha.mensaje };
+		}
+
+		if (idClienteEsValido) {
+			const client = await this.clientService.getClientById(idClienteFinal, token);
+			if (!client) {
+				return { status: 404, message: "El cliente indicado no existe." };
+			}
+		}
+
+		const mesa = await this.mesaRepository.findById(idMesa);
+		if (!mesa) {
+			return { status: 404, message: "La mesa indicada no existe." };
+		}
+		if (mesa.estado !== "Disponible") {
+			return { status: 409, message: "La mesa no está disponible para reservar." };
+		}
+
+		const nuevaReserva = await this.reservaRepository.create({
+			estado: "confirmada",
+			fechaReserva: validacionFecha.fecha!,
+			idMesa,
+			idCliente: idClienteFinal,
 			cantidadPersonas,
 		});
 
@@ -197,7 +262,7 @@ export class TableService {
 	}
 
 	/**
-	 * Cancela una reserva si está dentro del plazo permitido (24 horas antes de la reserva).
+	 * Cancela una reserva del cliente autenticado.
 	 */
 	async cancelReservation(idReserva: number, idCliente: number) {
 		try {
@@ -215,18 +280,6 @@ export class TableService {
 			// Validar que la reserva está en estado que permite cancelación
 			if (reserva.estado !== 'confirmada' && reserva.estado !== 'pendiente') {
 				return { status: 409, message: `No se puede cancelar una reserva en estado "${reserva.estado}".` };
-			}
-
-			// Validar plazo de cancelación (24 horas antes de la reserva)
-			const ahora = new Date();
-			const tiempoRestante = reserva.fechaReserva.getTime() - ahora.getTime();
-			const horasRestantes = tiempoRestante / (1000 * 60 * 60);
-
-			if (horasRestantes < 24) {
-				return {
-					status: 409,
-					message: 'No es posible cancelar la reserva. Debe hacerlo con al menos 24 horas de anticipación.',
-				};
 			}
 
 			// Actualizar estado de la reserva
@@ -368,7 +421,7 @@ export class TableService {
 	 * CU44: Confirmar una reserva que está en estado "pendiente".
 	 * Permite a empleados y administradores confirmar reservas.
 	 */
-	async confirmReservation(idReserva: number) {
+	async confirmReservation(idReserva: number, userId: number, tipoUsuario: TipoUsuario) {
 		try {
 			// Obtener la reserva
 			const reserva = await this.reservaRepository.findById(idReserva);
@@ -379,11 +432,36 @@ export class TableService {
 				};
 			}
 
+			if (tipoUsuario === TipoUsuario.cliente && reserva.idCliente !== userId) {
+				return {
+					status: 403,
+					message: 'No tienes permisos para confirmar esta reserva.',
+				};
+			}
+
 			// Validar que la reserva está en estado "pendiente"
 			if (reserva.estado !== 'pendiente') {
 				return {
 					status: 409,
 					message: `La reserva ya está ${reserva.estado}. No es posible modificar su estado.`,
+				};
+			}
+
+			const ahora = new Date();
+			const diferenciaMs = reserva.fechaReserva.getTime() - ahora.getTime();
+			const diferenciaMinutos = diferenciaMs / (1000 * 60);
+
+			if (diferenciaMinutos > 20) {
+				return {
+					status: 409,
+					message: 'La reserva solo puede confirmarse dentro de los 20 minutos previos a la hora programada.',
+				};
+			}
+
+			if (diferenciaMinutos < 0) {
+				return {
+					status: 409,
+					message: 'La reserva ya pasó su hora programada y no puede confirmarse.',
 				};
 			}
 

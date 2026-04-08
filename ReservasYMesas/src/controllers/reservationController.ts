@@ -58,6 +58,28 @@ export const reserveTable = async (req: Request, res: Response, next: NextFuncti
 	res.status(result.status).json(response);
 };
 
+export const reserveTableByStaff = async (req: Request, res: Response, next: NextFunction) => {
+	const { idMesa, fechaReserva, cantidadPersonas, idCliente } = req.body;
+
+	if (!idMesa || !fechaReserva || !cantidadPersonas) {
+		throw new AppError("idMesa, fechaReserva y cantidadPersonas son obligatorios.", 400);
+	}
+
+	const result = await tableService.reserveTableByStaff(
+		{ idMesa, fechaReserva, cantidadPersonas, idCliente },
+		req
+	);
+
+	const response: ApiResponse<any> = {
+		success: result.status >= 200 && result.status < 300,
+		data: result.data || null,
+		message: result.message || "Reserva creada correctamente.",
+		timestamp: new Date().toISOString()
+	};
+
+	res.status(result.status).json(response);
+};
+
 export const getReservationHistory = async (req: Request, res: Response, next: NextFunction) => {
 	if (!req.user?.id) {
 		throw new AppError("No se pudo identificar al usuario autenticado.", 401);
@@ -150,13 +172,17 @@ export const getReservationStatus = async (req: Request, res: Response, next: Ne
  * Permite a empleados y administradores confirmar reservas en estado pendiente
  */
 export const confirmReservation = async (req: Request, res: Response, next: NextFunction) => {
+	if (!req.user?.id || !req.user?.tipoUsuario) {
+		throw new AppError("No se pudo identificar al usuario autenticado.", 401);
+	}
+
 	const { idReserva } = req.params;
 
 	if (!idReserva || isNaN(parseInt(idReserva))) {
 		throw new AppError("idReserva inválido o no proporcionado.", 400);
 	}
 
-	const result = await tableService.confirmReservation(parseInt(idReserva));
+	const result = await tableService.confirmReservation(parseInt(idReserva), req.user.id, req.user.tipoUsuario);
 
 	const response: ApiResponse<any> = {
 		success: result.status >= 200 && result.status < 300,

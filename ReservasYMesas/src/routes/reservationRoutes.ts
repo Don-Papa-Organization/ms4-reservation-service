@@ -1,6 +1,6 @@
 import { Router } from "express";
 import asyncHandler from "express-async-handler";
-import { checkAvailability, reserveTable, getReservationHistory, cancelReservation, getDailyReservations, getReservationStatus, confirmReservation, cancelReservationByStaff, getAllReservationsByStatus } from "../controllers/reservationController";
+import { checkAvailability, reserveTable, reserveTableByStaff, getReservationHistory, cancelReservation, getDailyReservations, getReservationStatus, confirmReservation, cancelReservationByStaff, getAllReservationsByStatus } from "../controllers/reservationController";
 import { authenticateToken, requireUsuarioActivo, requireRoles } from "../middlewares/authMiddleware";
 import { TipoUsuario } from "../types/express";
 
@@ -11,6 +11,9 @@ router.get("/availability", asyncHandler(checkAvailability));
 
 // Ruta protegida: reservar mesa (requiere autenticación y ser cliente)
 router.post("/reserve", authenticateToken, requireUsuarioActivo, requireRoles(TipoUsuario.cliente), asyncHandler(reserveTable));
+
+// Ruta protegida: reservar mesa desde staff (requiere autenticación y rol empleado/administrador)
+router.post("/reserve-staff", authenticateToken, requireUsuarioActivo, requireRoles(TipoUsuario.empleado, TipoUsuario.administrador), asyncHandler(reserveTableByStaff));
 
 // Ruta protegida: historial de reservas (requiere autenticación y ser cliente)
 router.get("/history", authenticateToken, requireUsuarioActivo, requireRoles(TipoUsuario.cliente), asyncHandler(getReservationHistory));
@@ -30,8 +33,8 @@ router.get("/:idReserva/status", authenticateToken, requireUsuarioActivo, requir
 // Ruta protegida: cancelar reserva (requiere autenticación y ser cliente)
 router.delete("/:idReserva/cancel", authenticateToken, requireUsuarioActivo, requireRoles(TipoUsuario.cliente), asyncHandler(cancelReservation));
 
-// Ruta protegida: confirmar una reserva (requiere autenticación, usuario activo y rol de empleado/administrador)
-router.put("/:idReserva/confirm", authenticateToken, requireUsuarioActivo, requireRoles(TipoUsuario.empleado, TipoUsuario.administrador), asyncHandler(confirmReservation));
+// Ruta protegida: confirmar una reserva (requiere autenticación y usuario activo)
+router.put("/:idReserva/confirm", authenticateToken, requireUsuarioActivo, requireRoles(TipoUsuario.cliente, TipoUsuario.empleado, TipoUsuario.administrador), asyncHandler(confirmReservation));
 
 // Ruta protegida: cancelar una reserva por staff (requiere autenticación, usuario activo y rol de empleado/administrador)
 router.delete("/:idReserva/cancel-staff", authenticateToken, requireUsuarioActivo, requireRoles(TipoUsuario.empleado, TipoUsuario.administrador), asyncHandler(cancelReservationByStaff));
